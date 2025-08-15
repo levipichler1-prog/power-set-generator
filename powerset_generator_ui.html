@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Power Set Generator</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #121212;
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+    }
+    h1 {
+        color: #ff9800;
+    }
+    .container {
+        background: #1e1e1e;
+        padding: 20px;
+        border-radius: 10px;
+        width: 400px;
+        box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    }
+    input, select, button, textarea {
+        width: 100%;
+        padding: 8px;
+        margin: 8px 0;
+        border-radius: 5px;
+        border: none;
+        outline: none;
+    }
+    button {
+        background-color: #ff9800;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    button:hover {
+        background-color: #e68900;
+    }
+    .result {
+        margin-top: 15px;
+        background: #2c2c2c;
+        padding: 10px;
+        border-radius: 5px;
+        max-height: 300px;
+        overflow-y: auto;
+    }
+</style>
+</head>
+<body>
+<h1>Power Set Generator</h1>
+<div class="container">
+    <label>Set Elements (comma separated):</label>
+    <input type="text" id="elements" placeholder="e.g. a,b,c">
+
+    <label>Subset Size (leave blank for all sizes):</label>
+    <input type="number" id="subsetSize" placeholder="e.g. 2">
+
+    <label>Sorting:</label>
+    <select id="sortOrder">
+        <option value="none">None</option>
+        <option value="asc">Ascending</option>
+        <option value="desc">Descending</option>
+        <option value="length">By Length</option>
+    </select>
+
+    <label>
+        <input type="checkbox" id="noDuplicates"> Disable Duplicate Sets
+    </label>
+
+    <button onclick="generatePowerSet()">Generate</button>
+
+    <div class="result" id="result"></div>
+</div>
+
+<script>
+function getCombinations(arr, size) {
+    if (size === 0) return [[]];
+    if (arr.length < size) return [];
+    if (arr.length === size) return [arr];
+    let result = [];
+    for (let i = 0; i < arr.length; i++) {
+        let head = arr.slice(i, i+1);
+        let tailCombos = getCombinations(arr.slice(i+1), size-1);
+        for (let combo of tailCombos) {
+            result.push(head.concat(combo));
+        }
+    }
+    return result;
+}
+
+function generatePowerSet() {
+    let elements = document.getElementById("elements").value.split(",").map(e => e.trim()).filter(e => e);
+    let subsetSize = parseInt(document.getElementById("subsetSize").value);
+    let sortOrder = document.getElementById("sortOrder").value;
+    let noDuplicates = document.getElementById("noDuplicates").checked;
+
+    let powerSet = [];
+
+    if (isNaN(subsetSize)) {
+        for (let size = 0; size <= elements.length; size++) {
+            powerSet = powerSet.concat(getCombinations(elements, size));
+        }
+    } else {
+        powerSet = getCombinations(elements, subsetSize);
+    }
+
+    if (noDuplicates) {
+        let seen = new Set();
+        powerSet = powerSet.filter(set => {
+            let key = [...set].sort().join(",");
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+    }
+
+    if (sortOrder === "asc") {
+        powerSet.sort((a,b) => a.join("").localeCompare(b.join("")));
+    } else if (sortOrder === "desc") {
+        powerSet.sort((a,b) => b.join("").localeCompare(a.join("")));
+    } else if (sortOrder === "length") {
+        powerSet.sort((a,b) => a.length - b.length);
+    }
+
+    document.getElementById("result").innerHTML = powerSet.map(s => `{${s.join(", ")}}`).join("<br>");
+}
+</script>
+</body>
+</html>
